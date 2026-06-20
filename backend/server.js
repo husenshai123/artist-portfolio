@@ -8,13 +8,24 @@ const Contact = require('./models/Contact');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Configure CORS for both production and local development environments
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log("MongoDB Connection Error: ", err));
+
+// Base route to verify if the backend server is successfully deployed and live
+app.get('/', (req, res) => {
+  res.send("Artist Portfolio Backend is Running Live!");
+});
 
 // GET: Fetch all entries
 app.get('/api/guestbook', async (req, res) => {
@@ -50,6 +61,12 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only bind the port when running locally. Vercel handles the routing in production automatically.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running locally on port ${PORT}`);
+  });
+}
+
+// Export the application instance for Vercel's serverless environment
+module.exports = app;
